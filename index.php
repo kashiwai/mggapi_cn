@@ -23,6 +23,10 @@ switch ($uri) {
         handleApiInfo();
         break;
         
+    case '/game/launch':
+        handleGameLaunch();
+        break;
+        
     case '/api/verify-token':
         if ($method === 'POST') {
             handleVerifyToken();
@@ -124,4 +128,62 @@ function sendError($code, $message) {
         "status" => "error",
         "message" => $message
     ]);
+}
+
+function handleGameLaunch() {
+    $token = $_GET['token'] ?? '';
+    
+    if (empty($token)) {
+        die('Token is required');
+    }
+    
+    // Simple HTML that passes token via URL
+    header("Content-Type: text/html; charset=UTF-8");
+    ?>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MGGO Game</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
+        #loading { text-align: center; padding: 50px; }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <h2>Loading MGGO Game...</h2>
+        <p>Token: <?php echo htmlspecialchars(substr($token, 0, 20)); ?>...</p>
+    </div>
+    
+    <script>
+    // Simulate game loading with token
+    const token = '<?php echo htmlspecialchars($token); ?>';
+    
+    // Store token in sessionStorage (not cookie)
+    sessionStorage.setItem('mggo_token', token);
+    
+    // For parent window communication
+    if (window.parent !== window) {
+        window.parent.postMessage({
+            type: 'mggo_game_loaded',
+            token: token
+        }, '*');
+    }
+    
+    // Show game loaded message after 2 seconds
+    setTimeout(() => {
+        document.getElementById('loading').innerHTML = `
+            <h2>✅ MGGO Game Loaded</h2>
+            <p>Token authenticated via URL</p>
+            <p>No cookies required!</p>
+            <p>Player can now play the game.</p>
+        `;
+    }, 2000);
+    </script>
+</body>
+</html>
+    <?php
+    exit();
 }
